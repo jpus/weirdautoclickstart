@@ -362,7 +362,7 @@ class WeirdhostLogin:
                             self.log("✅ Cookie 登录成功！")
                             login_success = True
                         else:
-            self.log("Cookie 登录失败，cookies 可能已过期", "WARNING")
+                            self.log("Cookie 登录失败，cookies 可能已过期", "WARNING")
                 
                 # 方案2: 如果 Cookie 登录失败，尝试邮箱密码登录
                 if not login_success and has_email:

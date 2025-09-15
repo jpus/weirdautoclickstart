@@ -1,4 +1,4 @@
-name: 自动增加服务器时间
+name: 自动检查启动
 
 on:
   workflow_dispatch: # 允许在 Actions 页面手动触发此工作流，方便测试

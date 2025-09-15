@@ -1,0 +1,52 @@
+name: Weirdhost Auto Start
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 每天 UTC 1:00 (北京时间 9:00) 运行
+  workflow_dispatch:     # 允许手动触发
+
+jobs:
+  login-test:
+    runs-on: ubuntu-latest
+    
+    # 授予工作流写入仓库内容的权限
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install playwright
+        playwright install chromium
+        
+    - name: Run auto Startal
+      env:
+        REMEMBER_WEB_COOKIE: ${{ secrets.REMEMBER_WEB_COOKIE }}
+        WEIRDHOST_EMAIL: ${{ secrets.WEIRDHOST_EMAIL }}
+        WEIRDHOST_PASSWORD: ${{ secrets.WEIRDHOST_PASSWORD }}
+        WEIRDHOST_SERVER_URLS: ${{ secrets.WEIRDHOST_SERVER_URLS }}
+      run: python main.py
+      
+    - name: Commit README file
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 添加README文件
+        git add README.md
+        
+        # 检查是否有变化需要提交
+        if git diff --cached --quiet; then
+          echo "README文件无变化，无需提交"
+        else
+          git commit -m "📝 更新运行状态: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin HEAD:main
+        fi

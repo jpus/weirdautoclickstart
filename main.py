@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright, Cookie, TimeoutError as Playwri
 
 def add_server_time(server_url="https://hub.weirdhost.xyz/server/75050649"):
     """
-    尝试登录 hub.weirdhost.xyz 并点击 "Restart" 按钮。
+    尝试登录 hub.weirdhost.xyz 并点击 "Start" 按钮。
     优先使用 REMEMBER_WEB_COOKIE 进行会话登录，如果不存在则回退到邮箱密码登录。
     此函数设计为每次GitHub Actions运行时执行一次。
     """
@@ -106,22 +106,33 @@ def add_server_time(server_url="https://hub.weirdhost.xyz/server/75050649"):
                     browser.close()
                     return False
 
-            # --- 核心操作：查找并点击 "Restart" 按钮 ---
-            add_button_selector = 'button:has-text("Restart")' # 已更新为新的按钮文本
+            # --- 核心操作：查找并点击 "Start" 按钮 ---
+            # 使用更精确的选择器，只匹配包含"Start"文本且不包含"Restart"的按钮
+            add_button_selector = 'button:has-text("Start"):not(:has-text("Restart"))'
             print(f"正在查找并等待 '{add_button_selector}' 按钮...")
 
             try:
                 # 等待按钮变为可见且可点击
                 add_button = page.locator(add_button_selector)
                 add_button.wait_for(state='visible', timeout=30000)
-                add_button.click()
-                print("成功点击 'Restart' 按钮。")
-                time.sleep(5) # 等待5秒，确保操作在服务器端生效
-                print("任务完成。")
-                browser.close()
-                return True
+                
+                # 额外检查：确保按钮文本确实是"Start"而不是"Restart"
+                button_text = add_button.inner_text().strip()
+                if "Start" in button_text and "Restart" not in button_text:
+                    add_button.click()
+                    print("成功点击 'Start' 按钮。")
+                    time.sleep(5) # 等待5秒，确保操作在服务器端生效
+                    print("任务完成。")
+                    browser.close()
+                    return True
+                else:
+                    print(f"错误: 找到的按钮文本不符合要求。实际文本: '{button_text}'")
+                    page.screenshot(path="wrong_button_text.png")
+                    browser.close()
+                    return False
+                    
             except PlaywrightTimeoutError:
-                print(f"错误: 在30秒内未找到或 'Restart' 按钮不可见/不可点击。")
+                print(f"错误: 在30秒内未找到或 'Start' 按钮不可见/不可点击。")
                 page.screenshot(path="add_6h_button_not_found.png")
                 browser.close()
                 return False
